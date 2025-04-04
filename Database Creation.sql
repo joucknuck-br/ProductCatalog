@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `categories` (
   `parent_category_id` INT UNSIGNED NULL COMMENT 'ID of the parent category (NULL for root categories)',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when the category was created',
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Timestamp when the category was last updated',
+  `path` VARCHAR(1000) NULL COMMENT 'Stores the full materialized path to this category (e.g., Electronics > Computers)' AFTER parent_category_id,
   PRIMARY KEY (`category_id`),
   UNIQUE INDEX `uq_category_name_parent` (`name`, `parent_category_id`) COMMENT 'Prevent duplicate category names under the same parent',
   INDEX `idx_parent_category_id` (`parent_category_id` ASC),
