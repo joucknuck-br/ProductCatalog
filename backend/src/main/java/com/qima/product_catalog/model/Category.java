@@ -26,18 +26,16 @@ public class Category {
   @Column(name = "name", nullable = false, length = 255)
   private String name;
 
-  // --- Materialized Path Column ---
-  @Column(name = "path", length = 1000) // Assumes path column exists
+  @Column(name = "path", length = 1000)
   private String path;
 
-  @ManyToOne(fetch = FetchType.LAZY) // Self-reference for hierarchy
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "parent_category_id")
   private Category parentCategory;
 
-  @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.PERSIST) // Children if needed
+  @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.PERSIST)
   private Set<Category> subCategories = new HashSet<>();
 
-  // Products in this category (optional, can cause issues if categories are deleted)
   @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
   private Set<Product> products = new HashSet<>();
 

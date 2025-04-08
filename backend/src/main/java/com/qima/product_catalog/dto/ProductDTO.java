@@ -7,7 +7,8 @@ public record ProductDTO(
         String name,
         String description,
         BigDecimal price,
-        String categoryPath, // Direct mapping from category.path
-        Integer stockQuantity, // Represents 'available'
+        String categoryPath,
+        Integer stockQuantity,
+        Integer categoryId,
         String sku
 ) {}

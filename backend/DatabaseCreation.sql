@@ -1,4 +1,3 @@
--- Create the database (optional, if it doesn't exist)
 CREATE DATABASE IF NOT EXISTS product_catalog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE DATABASE IF NOT EXISTS QIMA CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -15,7 +15,7 @@ public record ProductUpdateDTO(
         BigDecimal price,
 
         @NotNull(message = "Category ID cannot be null")
-        Integer categoryId, // Allow changing category
+        Integer categoryId,
 
         @NotNull(message = "Stock quantity cannot be null")
         @Min(value = 0, message = "Stock quantity cannot be negative")
