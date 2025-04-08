@@ -32,7 +32,7 @@ The project is organized into the following main directories:
     * Docker installed on your machine.
     * Docker Compose installed on your machine.
 2.  **Clone the Repository:**
-    * `git clone <repository_url>`
+    * `git clone https://github.com/joucknuck-br/ProductCatalog.git`
 3.  **Navigate to the Project Root Directory:**
     * `cd ProductCatalog`
 4.  **Start the Application:**
@@ -45,8 +45,8 @@ The project is organized into the following main directories:
 
 The `docker-compose.yml` file defines the services for the application:
 
-* `db`: MySQL database service [cite: ProductCatalog/docker-compose.yml].
-* `backend`: Spring Boot backend service, which depends on the `db` service [cite: ProductCatalog/docker-compose.yml].
-* `frontend`: React frontend service, which depends on the `backend` service [cite: ProductCatalog/docker-compose.yml].
+* `db`: MySQL database service.
+* `backend`: Spring Boot backend service, which depends on the `db` service.
+* `frontend`: React frontend service, which depends on the `backend` service .
 
 The services are configured to link together, with the backend able to access the database and the frontend able to access the backend. The MySQL database is initialized with the schema defined in `backend/DatabaseCreation.sql`
