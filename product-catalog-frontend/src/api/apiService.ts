@@ -1,8 +1,20 @@
 import axios from 'axios';
-import { Product, Category, ProductCreateDTO, ProductUpdateDTO } from '../model/models';
+import Cookies from 'js-cookie'; // Import js-cookie
+import { Product, Category, ProductCreateDTO, CategoryDetail, CategoryCreateUpdateDTO, Page } from '../model/models';
 
-// Make sure this matches where your Spring Boot API is running
 const API_BASE_URL = 'http://localhost:8080/api';
+
+export interface ProductApiParams {
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    sortDir?: string;
+    name?: string;
+    categoryPath?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    inStockOnly?: boolean;
+}
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -11,10 +23,39 @@ const apiClient = axios.create({
     },
 });
 
+// Add a request interceptor to include the Authorization header
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = Cookies.get('auth'); // Get the token from the cookie
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`; // Set the Authorization header
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 // --- Product API Calls ---
 
-export const getProducts = async (): Promise<Product[]> => {
-    const response = await apiClient.get<Product[]>('/products');
+export const getProducts = async (
+    params: ProductApiParams = {}
+): Promise<Page<Product>> => {
+    const cleanParams: Record<string, unknown> = {};
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+            if (key === 'inStockOnly' && value === false) {
+                // Skip sending 'inStockOnly=false'
+            } else {
+                cleanParams[key] = value;
+            }
+        }
+    });
+
+    const response = await apiClient.get<Page<Product>>('/products', {
+        params: cleanParams,
+    });
     return response.data;
 };
 
@@ -23,13 +64,21 @@ export const getProductById = async (id: number): Promise<Product> => {
     return response.data;
 };
 
-export const createProduct = async (productData: ProductCreateDTO): Promise<Product> => {
+export const createProduct = async (
+    productData: ProductCreateDTO
+): Promise<Product> => {
     const response = await apiClient.post<Product>('/products', productData);
     return response.data;
 };
 
-export const updateProduct = async (id: number, productData: ProductUpdateDTO): Promise<Product> => {
-    const response = await apiClient.put<Product>(`/products/${id}`, productData);
+export const updateProduct = async (
+    id: number,
+    productData: ProductCreateDTO
+): Promise<Product> => {
+    const response = await apiClient.put<Product>(
+        `/products/${id}`,
+        productData
+    );
     return response.data;
 };
 
@@ -38,9 +87,40 @@ export const deleteProduct = async (id: number): Promise<void> => {
 };
 
 // --- Category API Calls ---
-// !! IMPORTANT: Assumes GET /api/categories exists on your backend !!
+
 export const getCategories = async (): Promise<Category[]> => {
-    // If your backend returns {id, name, path}, adjust the Category type accordingly
     const response = await apiClient.get<Category[]>('/categories');
     return response.data;
 };
+
+export const getCategoryById = async (id: number): Promise<CategoryDetail> => {
+    const response = await apiClient.get<CategoryDetail>(`/categories/${id}`);
+    return response.data;
+};
+
+export const createCategory = async (
+    categoryData: CategoryCreateUpdateDTO
+): Promise<Category> => {
+    const response = await apiClient.post<Category>(
+        '/categories',
+        categoryData
+    );
+    return response.data;
+};
+
+export const updateCategory = async (
+    id: number,
+    categoryData: CategoryCreateUpdateDTO
+): Promise<Category> => {
+    const response = await apiClient.put<Category>(
+        `/categories/${id}`,
+        categoryData
+    );
+    return response.data;
+};
+
+export const deleteCategory = async (id: number): Promise<void> => {
+    await apiClient.delete(`/categories/${id}`);
+};
+
+export type { Page };

@@ -1,63 +1,96 @@
-import { useState, useEffect } from 'react';
-import { Category, ProductCreateDTO, ProductUpdateDTO, Product } from '../model/models';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useEffect, useMemo } from 'react';
+import { Category, ProductCreateDTO , Product } from '../model/models';
+import { Form, FormGroup, FormLabel, FormControl, Button, DropdownButton, Dropdown } from 'react-bootstrap';
+import { buildCategoryTree } from '../utils/treeUtils';
+import RecursiveDropdownItem from './RecursiveDropdownItem';
 
 interface ProductFormProps {
-    initialData?: Product | null; // Product data for editing, null/undefined for adding
+    initialData?: Product | null;
     categories: Category[];
-    onSubmit: (data: ProductCreateDTO | ProductUpdateDTO) => void;
+    onSubmit: (data: ProductCreateDTO | ProductCreateDTO ) => void;
     isSubmitting: boolean;
     submitButtonText?: string;
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
     initialData = null,
-    categories,
+    categories: flatCategories,
     onSubmit,
     isSubmitting,
     submitButtonText = 'Save Product'
 }) => {
     const [name, setName] = useState(initialData?.name || '');
     const [description, setDescription] = useState(initialData?.description || '');
-    const [price, setPrice] = useState<string>(initialData?.price?.toString() || ''); // Keep as string for input
-    const [stockQuantity, setStockQuantity] = useState<string>(initialData?.stockQuantity?.toString() || ''); // Keep as string
+    const [price, setPrice] = useState<string>(initialData?.price?.toString() || '');
+    const [stockQuantity, setStockQuantity] = useState<string>(initialData?.stockQuantity?.toString() || '');
     const [sku, setSku] = useState(initialData?.sku || '');
-    // Find the initial category ID based on the path (this is tricky if path isn't unique/reliable)
-    // A better approach would be if initialData included categoryId directly
-    // For simplicity, let's find the best match or default
-    const findInitialCategoryId = (): string => {
-        if (!initialData || !initialData.categoryPath || categories.length === 0) return '';
-        // Attempt to find category by path if available, otherwise fallback
-        const matchingCategory = categories.find(c => c.path === initialData.categoryPath);
-        if(matchingCategory) return matchingCategory.id.toString();
-        // Fallback: maybe find by name part? Or just default to first?
-        // This depends heavily on how categories are structured/returned
-        return categories[0]?.id.toString() || ''; // Default to first or empty
+    const [categoryPathFilter, setCategoryPathFilter] = useState<string>('');
+    const [selectedCategoryName, setSelectedCategoryName] = useState<string>("Select Category");
+
+    const categoryTree = useMemo(() => {
+        return buildCategoryTree(flatCategories);
+    }, [flatCategories]);
+
+    const findInitialCategoryPath = (): string => {
+        if (!initialData || !initialData.categoryPath) return '';
+        return initialData.categoryPath;
     }
-    const [categoryId, setCategoryId] = useState<string>(findInitialCategoryId());
-
-
     useEffect(() => {
-        // Update form if initialData changes (e.g., when navigating to edit page)
         setName(initialData?.name || '');
         setDescription(initialData?.description || '');
         setPrice(initialData?.price?.toString() || '');
         setStockQuantity(initialData?.stockQuantity?.toString() || '');
         setSku(initialData?.sku || '');
-        setCategoryId(findInitialCategoryId());
-    }, [initialData, categories]); // Rerun effect if initialData or categories change
+        setCategoryPathFilter(findInitialCategoryPath());
+        setSelectedCategoryName("Select Category");
+    }, [initialData, flatCategories]);
+
+    const handleCategorySelect = (eventKey: string | null) => {
+        setCategoryPathFilter(eventKey || "");
+        if (eventKey === "") {
+            setSelectedCategoryName("Select Category");
+            return;
+        }
+        const findNodeInTree = (nodes: any[], path: string): string | undefined => {
+            for (const node of nodes) {
+                if (node.path === path) {
+                    return node.name;
+                }
+                if (node.children && node.children.length > 0) {
+                    const found = findNodeInTree(node.children, path);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+            return undefined;
+        };
+
+        let eventKeyStr = ''
+        if (eventKey != null) {
+            eventKeyStr = eventKey.toString()
+        }
+        const categoryNameFromTree = findNodeInTree(categoryTree, eventKeyStr);
+        if (categoryNameFromTree) {
+            setSelectedCategoryName(categoryNameFromTree);
+        }
+    };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const parsedPrice = parseFloat(price);
         const parsedStock = parseInt(stockQuantity, 10);
-        const parsedCategoryId = parseInt(categoryId, 10);
+        const selectedCategory = flatCategories.find(c => c.name === selectedCategoryName);
+        const parsedCategoryId = selectedCategory ? selectedCategory.id : null;
 
-        if (isNaN(parsedPrice) || isNaN(parsedStock) || isNaN(parsedCategoryId)) {
+        if (isNaN(parsedPrice) || isNaN(parsedStock) || parsedCategoryId === null) {
             alert('Please enter valid numbers for Price, Stock, and select a Category.');
             return;
         }
 
-        const productData: ProductCreateDTO | ProductUpdateDTO = {
+        const productData: ProductCreateDTO = {
             name,
             description: description || null,
             price: parsedPrice,
@@ -69,28 +102,30 @@ const ProductForm: React.FC<ProductFormProps> = ({
     };
 
     return (
-        <form onSubmit={handleSubmit} className="product-form">
-            <div>
-                <label htmlFor="name">Name:</label>
-                <input
+        <Form onSubmit={handleSubmit} className="product-form">
+            <FormGroup className="mb-3">
+                <FormLabel htmlFor="name">Name:</FormLabel>
+                <FormControl
                     type="text"
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    disabled={isSubmitting}
                 />
-            </div>
-            <div>
-                <label htmlFor="description">Description:</label>
-                <textarea
+            </FormGroup>
+            <FormGroup className="mb-3">
+                <FormLabel htmlFor="description">Description:</FormLabel>
+                <FormControl
+                    as="textarea"
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                 />
-            </div>
-            <div>
-                <label htmlFor="price">Price:</label>
-                <input
+            </FormGroup>
+            <FormGroup className="mb-3">
+                <FormLabel htmlFor="price">Price:</FormLabel>
+                <FormControl
                     type="number"
                     id="price"
                     step="0.01"
@@ -98,11 +133,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     required
+                    disabled={isSubmitting}
                 />
-            </div>
-            <div>
-                <label htmlFor="stockQuantity">Stock Quantity:</label>
-                <input
+            </FormGroup>
+            <FormGroup className="mb-3">
+                <FormLabel htmlFor="stockQuantity">Stock Quantity:</FormLabel>
+                <FormControl
                     type="number"
                     id="stockQuantity"
                     min="0"
@@ -110,40 +146,53 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     value={stockQuantity}
                     onChange={(e) => setStockQuantity(e.target.value)}
                     required
+                    disabled={isSubmitting}
                 />
-            </div>
-            <div>
-                <label htmlFor="sku">SKU:</label>
-                <input
+            </FormGroup>
+            <FormGroup className="mb-3">
+                <FormLabel htmlFor="sku">SKU:</FormLabel>
+                <FormControl
                     type="text"
                     id="sku"
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                 />
-            </div>
-            <div>
-                <label htmlFor="category">Category:</label>
-                <select
-                    id="category"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    required
-                    disabled={categories.length === 0}
+            </FormGroup>
+            <FormGroup className="mb-3">
+                <FormLabel htmlFor="category">Category:</FormLabel>
+                <DropdownButton
+                    id="category-filter-dropdown"
+                    title={selectedCategoryName || "Select Category"}
+                    variant="secondary"
+                    disabled={isSubmitting || flatCategories.length === 0}
                 >
-                    <option value="" disabled>-- Select Category --</option>
-                    {categories.length === 0 && <option disabled>Loading categories...</option>}
-                    {categories.map((cat) => (
-                         // Display category path if available, otherwise name
-                        <option key={cat.id} value={cat.id}>
-                           {cat.path || cat.name}
-                        </option>
+                    <Dropdown.Item
+                        eventKey=""
+                        onClick={() => handleCategorySelect("")}
+                    >
+                        -- Select Category --
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    {categoryTree.map(rootCategory => (
+                        <RecursiveDropdownItem
+                            key={rootCategory.id}
+                            category={rootCategory}
+                            onSelectCategory={handleCategorySelect}
+                            level={0}
+                        />
                     ))}
-                </select>
-            </div>
-            <button type="submit" disabled={isSubmitting || categories.length === 0}>
+                    {flatCategories.length === 0 && <Dropdown.Item disabled>Loading categories...</Dropdown.Item>}
+                </DropdownButton>
+                <FormControl
+                    type="hidden"
+                    value={categoryPathFilter}
+                    id="categoryPath"
+                />
+            </FormGroup>
+            <Button type="submit" disabled={isSubmitting || flatCategories.length === 0}>
                 {isSubmitting ? 'Saving...' : submitButtonText}
-            </button>
-        </form>
+            </Button>
+        </Form>
     );
 };
 

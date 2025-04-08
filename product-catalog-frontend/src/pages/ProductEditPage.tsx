@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ProductForm from '../components/ProductForm';
 import { getProductById, updateProduct, getCategories } from '../api/apiService';
-import { Product, Category, ProductUpdateDTO } from '../model/models';
+import { Product, Category, ProductCreateDTO } from '../model/models';
+import { Col, Container, Row } from 'react-bootstrap';
 
 const ProductEditPage: React.FC = () => {
     const navigate = useNavigate();
-    const { id } = useParams<{ id: string }>(); // Get ID from URL
+    const { id } = useParams<{ id: string }>(); 
     const productId = Number(id);
 
     const [product, setProduct] = useState<Product | null>(null);
@@ -24,7 +26,6 @@ const ProductEditPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch both product and categories
         Promise.all([
             getProductById(productId),
             getCategories()
@@ -32,26 +33,26 @@ const ProductEditPage: React.FC = () => {
             setProduct(productData);
             setCategories(categoryData);
         }).catch(err => {
-            console.error('Failed to load data for editing:', err);
-            setError('Failed to load product or category data. Please try again.');
+            const strError = 'Failed to load product or category data: ' + err;
+            setError(strError);
         }).finally(() => {
             setLoading(false);
         });
 
-    }, [productId]); // Refetch if ID changes
+    }, [productId]);
 
-    const handleUpdateProduct = async (data: ProductUpdateDTO) => {
+    const handleUpdateProduct = async (data: ProductCreateDTO) => {
          if (isNaN(productId)) return;
         setIsSubmitting(true);
         setError(null);
         try {
             await updateProduct(productId, data);
             alert('Product updated successfully!');
-            navigate('/'); // Redirect to product list
-        } catch (err: unknown) {
+            navigate('/'); 
+        } catch (err: any) {
             console.error('Failed to update product:', err);
 
-            let errorMessage = 'An unknown error occurred.'; // Default message
+            let errorMessage = 'An unknown error occurred.';
     
             if (err instanceof Error) {
                 errorMessage = err.message;
@@ -59,7 +60,7 @@ const ProductEditPage: React.FC = () => {
                 if (typeof err === 'object' && err !== null && 'response' in err) {
                      const response = (err as { response?: { data?: { message?: string } } }).response;
                      if (response?.data?.message && typeof response.data.message === 'string') {
-                        errorMessage = response.data.message; // Use the specific message from the response
+                        errorMessage = response.data.message;
                      }
                 }
             } else if (typeof err === 'string') {
@@ -88,18 +89,22 @@ const ProductEditPage: React.FC = () => {
 
 
     return (
-        <div>
-            <h1>Edit Product</h1>
-            {error && <p className="error-message">{error}</p>}
-            <ProductForm
-                initialData={product}
-                categories={categories}
-                onSubmit={handleUpdateProduct}
-                isSubmitting={isSubmitting}
-                submitButtonText="Update Product"
-            />
-             <button onClick={() => navigate('/')} disabled={isSubmitting}>Cancel</button>
-        </div>
+        <Container className="mt-4">
+            <Row>
+                <Col md={{ span: 8, offset: 2 }}>
+                    <h1>Edit Product</h1>
+                    {error && <p className="error-message">{error}</p>}
+                    <ProductForm
+                        initialData={product}
+                        categories={categories}
+                        onSubmit={handleUpdateProduct}
+                        isSubmitting={isSubmitting}
+                        submitButtonText="Update Product"
+                    />
+                    <button onClick={() => navigate('/')} disabled={isSubmitting}>Cancel</button>
+                </Col>
+            </Row>
+        </Container>
     );
 };
 

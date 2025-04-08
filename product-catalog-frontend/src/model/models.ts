@@ -3,32 +3,49 @@ export interface Product {
     id: number;
     name: string;
     description: string | null;
-    price: number; // Or string if you prefer to handle BigDecimal carefully
+    price: number; 
     categoryPath: string | null;
     stockQuantity: number;
     sku: string | null;
-    // Add other fields if necessary (createdAt, updatedAt)
+    categoryId: number;
 }
 
-// Matches backend Category structure needed for dropdown
-// !! Adjust based on what your GET /api/categories returns !!
-export interface Category {
-    id: number;
-    name: string; // Or use path if more descriptive
-    path?: string; // Optional, depending on backend endpoint
-}
-
-// Matches backend ProductCreateDTO
 export interface ProductCreateDTO {
     name: string;
     description: string | null;
-    price: number; // Send as number
-    categoryId: number; // Send category ID
+    price: number; 
+    categoryId: number; 
     stockQuantity: number;
     sku: string | null;
 }
 
-// Matches backend ProductUpdateDTO
-export interface ProductUpdateDTO extends ProductCreateDTO {
-     // Inherits fields from CreateDTO, assumes update uses the same structure + ID
+export interface Category {
+    id: number;
+    parentCategoryId: number | null;
+    name: string; 
+    path?: string; 
+}
+
+export interface CategoryNode extends Category {
+    children: CategoryNode[];
+}
+
+export interface CategoryDetail extends Category {
+    parentCategoryId: number | null;
+}
+
+export interface CategoryCreateUpdateDTO {
+    name: string;
+    parentCategoryId: number | null;
+}
+
+export interface Page<T> {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number;
+    first: boolean;
+    last: boolean;
+    empty: boolean;
 }

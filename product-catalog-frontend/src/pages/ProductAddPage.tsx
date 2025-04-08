@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ProductForm from '../components/ProductForm';
 import { createProduct, getCategories } from '../api/apiService';
 import { Category, ProductCreateDTO } from '../model/models';
+import { Col, Container, Row } from 'react-bootstrap';
 
 const ProductAddPage: React.FC = () => {
     const navigate = useNavigate();
@@ -29,21 +30,19 @@ const ProductAddPage: React.FC = () => {
         try {
             await createProduct(data);
             alert('Product added successfully!');
-            navigate('/'); // Redirect to product list
+            navigate('/'); 
         } catch (err: unknown) {
             console.error('Failed to add product:', err);
 
-            let errorMessage = 'An unknown error occurred.'; // Default message
+            let errorMessage = 'An unknown error occurred.';
     
             if (err instanceof Error) {
-                // It's a standard JavaScript Error object (or subclass)
                 errorMessage = err.message;
     
                 if (typeof err === 'object' && err !== null && 'response' in err) {
-                     // Assert the type cautiously after the check OR create a more specific type guard
                      const response = (err as { response?: { data?: { message?: string } } }).response;
                      if (response?.data?.message && typeof response.data.message === 'string') {
-                        errorMessage = response.data.message; // Use the specific message from the response
+                        errorMessage = response.data.message; 
                      }
                 }
             } else if (typeof err === 'string') {
@@ -58,20 +57,24 @@ const ProductAddPage: React.FC = () => {
     };
 
     return (
-        <div>
-            <h1>Add New Product</h1>
-             {loadingCategories && <p>Loading category options...</p>}
-             {error && <p className="error-message">{error}</p>}
-             {!loadingCategories && (
-                  <ProductForm
-                      categories={categories}
-                      onSubmit={handleAddProduct}
-                      isSubmitting={isSubmitting}
-                      submitButtonText="Add Product"
-                  />
-             )}
-            <button onClick={() => navigate('/')} disabled={isSubmitting}>Cancel</button>
-        </div>
+        <Container className="mt-4">
+            <Row>
+                <Col md={{ span: 8, offset: 2 }}>
+                    <h1>Add New Product</h1>
+                    {loadingCategories && <p>Loading category options...</p>}
+                    {error && <p className="error-message">{error}</p>}
+                    {!loadingCategories && (
+                          <ProductForm
+                              categories={categories}
+                              onSubmit={handleAddProduct}
+                              isSubmitting={isSubmitting}
+                              submitButtonText="Add Product"
+                            />
+                    )}
+                    <button onClick={() => navigate('/')} disabled={isSubmitting}>Cancel</button>
+                </Col>
+            </Row>
+        </Container>
     );
 };
 

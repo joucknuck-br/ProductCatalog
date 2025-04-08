@@ -1,34 +1,38 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import Login from './components/Login';
+import Cookies from 'js-cookie';
 import ProductListPage from './pages/ProductListPage';
 import ProductAddPage from './pages/ProductAddPage';
 import ProductEditPage from './pages/ProductEditPage';
-import './index.css'; // Import basic styles
+import CategoryAddPage from './pages/CategoryAddPage';
+import CategoryEditPage from './pages/CategoryEditPage';
 
 function App() {
-    return (
-        <Router>
-            <div>
-                {/* Basic Navigation (Optional) */}
-                {/* <nav>
-                    <ul>
-                        <li><Link to="/">Product List</Link></li>
-                    </ul>
-                </nav> */}
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-                {/* Content Area */}
-                <main className="container">
-                    <Routes>
-                        <Route path="/" element={<ProductListPage />} />
-                        <Route path="/add" element={<ProductAddPage />} />
-                        <Route path="/edit/:id" element={<ProductEditPage />} />
-                         {/* Add a 404 or default route if needed */}
-                         <Route path="*" element={<div><h2>Page Not Found</h2><Link to="/">Go Home</Link></div>} />
-                    </Routes>
-                </main>
-            </div>
-        </Router>
-    );
+  useEffect(() => {
+    const authCookie = Cookies.get('auth');
+    if (authCookie) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  return (
+    <BrowserRouter>
+        <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={isAuthenticated ? <ProductListPage />: <Navigate to="/login" />} />
+            <Route path="/add" element={isAuthenticated ? <ProductAddPage /> : <Navigate to="/login" />} />
+            <Route path="/edit/:id" element={isAuthenticated ? <ProductEditPage /> : <Navigate to="/login" />} />
+            <Route path="/categories/add" element={isAuthenticated ? <CategoryAddPage /> : <Navigate to="/login" />} />
+            <Route path="/categories/edit/:id" element={isAuthenticated ? <CategoryEditPage /> : <Navigate to="/login" />} />
+            <Route path="*" element={<div><h2>Page Not Found</h2><Link to="/login">Go Home</Link></div>} />
+        </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
